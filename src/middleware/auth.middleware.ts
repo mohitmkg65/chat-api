@@ -3,7 +3,6 @@ import jwt, { JwtPayload } from 'jsonwebtoken'
 import mongoose from "mongoose"
 import { CatchError, TryError } from "../utils/error"
 
-
 export interface PayloadInterface {
     id: mongoose.Types.ObjectId
     name: string
@@ -19,7 +18,7 @@ const AuthMiddleware = async (req: SessionInterface, res: Response, next: NextFu
     try {
         const accessToken = req.cookies.accessToken
         if(!accessToken)
-            throw TryError("Failed to authorise usersss", 401)
+            throw TryError("Failed to authorise user", 401)
 
         const payload = await jwt.verify(accessToken, process.env.AUTH_SECRET!) as JwtPayload
         req.session = {

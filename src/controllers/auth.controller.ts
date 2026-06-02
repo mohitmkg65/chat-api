@@ -13,12 +13,12 @@ const generateToken = (payload: PayloadInterface) => {
     return accessToken
 }
 
-const getOptions = () => {
+export const getOptions = (maxAge: number) => {
     return {
         httpOnly: true,
-        maxAge: twoHoursInMs,
+        maxAge: maxAge ? maxAge : twoHoursInMs,
         secure: false,
-        domain: 'localhost'
+        // domain: 'localhost'
     }
 }
 
@@ -33,6 +33,10 @@ export const signup = async (request: Request, response: Response) => {
 
 export const login = async(request: Request, response: Response) => {
     try {
+        const token = request.cookies.accessToken
+        if(token)
+            throw TryError("Already logged in", 401)
+
         const {email, password} = request.body
         const user = await UserModel.findOne({email})
         if(!user)
@@ -48,11 +52,11 @@ export const login = async(request: Request, response: Response) => {
             email: user.email,
             status: user.status,
         }
-        const accessToken = generateToken(payload)
-
-        response.cookie("accessToken", accessToken, getOptions())
+        const accessToken = await generateToken(payload)
+        response.cookie("accessToken", accessToken, getOptions(twoHoursInMs))
         response.json({message: "Login success"})
     } catch (error: unknown) {
         CatchError(error, response)
     }
 }
+

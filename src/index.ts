@@ -8,7 +8,9 @@ import CorsConfig from "./utils/cors"
 import express from "express"
 import cors from "cors"
 
-import authRouter from './routes/auth.router'
+import authRouter from './routes/auth.route'
+import chatRouter from './routes/chat.route'
+import logoutRouter from './routes/logout.route'
 
 const app = express()
 const PORT = Number(process.env.PORT) || 8080
@@ -23,5 +25,7 @@ app.use(express.json())
 app.use(express.urlencoded({extended: false}))
 
 app.use('/api/auth', authRouter)
+app.use('/api/chat', chatRouter)
+app.use('/api/logout', logoutRouter)
 
 export default app
