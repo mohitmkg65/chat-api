@@ -95,7 +95,7 @@ export const fetchMessage = async (request: SessionInterface, response: Response
 
         const limit = parseInt(request.query.limit as string || "30", 10)
         const page = parseInt(request.query.page as string || "1", 10)
-        const skip = (page - 1) * limit
+        const skip = (page - 1) * limit 
         
         const chatObjId = new Types.ObjectId(chatId)
         const chatExists = await ChatModel.exists({ _id: chatObjId })
