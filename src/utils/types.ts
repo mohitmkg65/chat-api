@@ -28,3 +28,13 @@ export interface messageInterface extends Document {
     createdAt: Date;
     updatedAt: Date;
 }
+
+export interface PopulatedUser {
+    _id: Types.ObjectId;
+    name: string;
+    email: string;
+}
+
+export interface populatedMessage extends Omit<messageInterface, "senderId"> {
+    senderId: PopulatedUser;
+}

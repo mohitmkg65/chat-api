@@ -1,5 +1,6 @@
 import { Schema, model, Types } from "mongoose"
 import { chatInterface } from "../utils/types"
+import mongoose from "mongoose";
 
 const ChatSchema = new Schema<chatInterface>({
     participants: [{
@@ -17,7 +18,13 @@ const ChatSchema = new Schema<chatInterface>({
     },
 },{timestamps: true})
 
-ChatSchema.index({ participants: 1 })
+// ChatSchema.index({ participants: 1 })
+// const chatSchema = new mongoose.Schema({
+//     participants: [{
+//         type: mongoose.Schema.Types.ObjectId,
+//         ref: "User"
+//     }]
+// });
 
-const ChatModel = model<chatInterface>("chats", ChatSchema)
+const ChatModel = model<chatInterface>("Chat", ChatSchema)
 export default ChatModel

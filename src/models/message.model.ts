@@ -28,5 +28,5 @@ const MessageSchema = new Schema<messageInterface>({
 MessageSchema.index({ chatId: 1, createdAt: -1 })
 MessageSchema.index({ createdAt: -1 })
 
-const MessageModel = model<messageInterface>("messages", MessageSchema)
+const MessageModel = model<messageInterface>("Message", MessageSchema)
 export default MessageModel

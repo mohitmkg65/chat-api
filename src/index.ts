@@ -7,17 +7,24 @@ import cookieParser from 'cookie-parser'
 import CorsConfig from "./utils/cors"
 import express from "express"
 import cors from "cors"
+import { Server } from "socket.io"
+import { createServer } from 'http'
+import { socketHandler } from './socket/socket'
 
 import authRouter from './routes/auth.route'
 import chatRouter from './routes/chat.route'
 import logoutRouter from './routes/logout.route'
 
 const app = express()
+const server = createServer(app)
 const PORT = Number(process.env.PORT) || 8080
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
+
+const io  = new Server(server, {cors: CorsConfig})
+socketHandler(io)
 
 app.use(cors(CorsConfig))
 app.use(cookieParser())

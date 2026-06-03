@@ -5,6 +5,7 @@ import { Types } from "mongoose"
 import MessageModel from "../models/message.model"
 import UserModel from "../models/user.model"
 import ChatModel from "../models/chat.model"
+import { PopulatedUser } from "../utils/types"
 
 export const createChat = async (request: SessionInterface, response: Response) => {
     try {
@@ -26,8 +27,7 @@ export const createChat = async (request: SessionInterface, response: Response) 
             const existingChat = await ChatModel.findOne({
                 isGroup: false,
                 participants: { $all: allParticipants, $size: 2 },
-            })
-            // .populate("participants", "name email status lastSeen")
+            }).populate("participants", "name email status").lean()
 
             if (existingChat)
                 return response.status(200).json({ success: true,  message: "Chat room created successfully.", data: existingChat })
@@ -39,9 +39,8 @@ export const createChat = async (request: SessionInterface, response: Response) 
             groupName: isGroup ? (groupName || "New Group Chat") : undefined,
         })
         await newChat.save()        
-        const chatWithParticipants = await ChatModel.findById(newChat._id)
-        // .populate("participants", "name email status")
-        return response.status(200).json({ success: true, message: "Chat room created successfully.", data: newChat })
+        const chatWithParticipants = await ChatModel.findById(newChat._id).populate("participants", "name email status")
+        return response.status(200).json({ success: true, message: "Chat room created successfully.", data: chatWithParticipants })
     } catch (error) {
         CatchError(error, response, 'Failed to fetch freinds')
     }
@@ -52,8 +51,8 @@ export const fetchChat = async (request: SessionInterface, response: Response) =
         if(!request.session)
             throw TryError("Failed to fetch chats")
 
-        const chats = await ChatModel.find({ participants: request.session.id }).sort({ updatedAt: -1 }).lean()
-        // .populate("participants", "name email status lastSeen")
+        const chats = await ChatModel.find({ participants: request.session.id }).populate("participants", "name email status").sort({ updatedAt: -1 }).lean()
+        
         response.json({ chats })
     } catch (error) {
         CatchError(error, response, 'Failed to fetch chats')
@@ -79,8 +78,7 @@ export const createMessage = async (request: SessionInterface, response: Respons
         await newMessage.save()
 
         await ChatModel.updateOne({ _id: chatObjId }, { $set: { updatedAt: new Date() } })
-        const messageWithSender = await MessageModel.findById(newMessage._id)
-        // .populate("senderId", "name email status")
+        const messageWithSender = await MessageModel.findById(newMessage._id).populate("senderId", "name email status")
         response.json({ success: true, message: "Message sent successfully.", data: messageWithSender })
     } catch (error) {
         CatchError(error, response, 'Failed to send message')
@@ -102,8 +100,7 @@ export const fetchMessage = async (request: SessionInterface, response: Response
         if (!chatExists) 
             throw TryError("Specified chat room not found.", 404)
 
-        const messages = await MessageModel.find({ chatId: chatObjId }).sort({ createdAt: -1 }).skip(skip).limit(limit)
-        // .populate("senderId", "name email status").lean()
+        const messages = await MessageModel.find({ chatId: chatObjId }).skip(skip).limit(limit).populate("senderId", "name email status").sort({ createdAt: -1 }).lean()
         const data = messages.reverse()
         
         const total = await MessageModel.countDocuments({ chatId: chatObjId })
@@ -118,6 +115,32 @@ export const fetchMessage = async (request: SessionInterface, response: Response
     } catch (error) {
         CatchError(error, response, 'Failed to fetch messages')
     }   
+}
+
+export const createMessageService = async (payload: any) => {
+    try {
+        const { chatId, message, fileUrl } = payload
+        const senderObjId = new Types.ObjectId(payload.senderId)
+        const chatObjId = new Types.ObjectId(chatId)
+
+        const chatExists = await ChatModel.exists({ _id: chatObjId })
+        if (!chatExists) 
+            throw TryError("Specified chat room not found.", 404)
+
+        const newMessage = new MessageModel({
+            chatId: chatObjId,
+            senderId: senderObjId,
+            message: message,
+            fileUrl,
+        })
+        await newMessage.save()
+
+        await ChatModel.updateOne({ _id: chatObjId }, { $set: { updatedAt: new Date() } })
+        const messageWithSender = await MessageModel.findById(newMessage._id).populate<{ senderId: PopulatedUser }>("senderId", "name email")
+        return messageWithSender
+    } catch (error) {
+        throw new Error('Failed to send message')
+    }
 }
 
 // export const fetchFreinds = async (request: SessionInterface, response: Response) => {
